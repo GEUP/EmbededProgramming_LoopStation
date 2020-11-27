@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:hint="127.0.0.1"
         android:textSize="50dp"
-        android:text="192.168.219.103"
+        android:text="192.168.219.104"
         android:inputType="numberDecimal"
         app:layout_constraintEnd_toEndOf="parent" />
     <Button
@@ -34,15 +34,12 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btn" />
 
-
-    <TextView
-        android:id="@+id/tv"
+    <ImageView
+        android:id="@+id/speakerImage"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="100dp"
-        android:text="?"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/sendbtn" />
+        app:srcCompat="@drawable/speakeroff" />
+
+
 
 </LinearLayout>

@@ -16,7 +16,9 @@ import androidx.core.app.ActivityCompat
 import kotlinx.android.synthetic.main.activity_main.*
 import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.*
+import java.io.File
 import java.io.IOException
+import java.nio.CharBuffer
 
 
 private const val LOG_TAG = "AudioRecordTest"
@@ -25,10 +27,7 @@ private const val REQUEST_RECORD_AUDIO_PERMISSION = 200
 class MainActivity : AppCompatActivity() {
     private lateinit var mqttAndroidClient: MqttAndroidClient
     private var fileName: String = ""
-    private var recordButton: RecordButton? = null
     private var recorder: MediaRecorder? = null
-
-    private var playButton: PlayButton? = null
     private var player: MediaPlayer? = null
     var poisition = 0
     private var permissionToRecordAccepted = false
@@ -66,10 +65,10 @@ class MainActivity : AppCompatActivity() {
                 setDataSource(fileName)
                 prepare()
                 start()
-                Toast.makeText(applicationContext,fileName,Toast.LENGTH_LONG).show()
+
             } catch (e: IOException) {
                 Log.e(LOG_TAG, "prepare() failed")
-                Toast.makeText(applicationContext,"prepare() failed",Toast.LENGTH_LONG).show()
+
             }
         }
     }
@@ -94,51 +93,16 @@ class MainActivity : AppCompatActivity() {
 
             start()
         }
+
     }
 
     private fun stopRecording() {
         recorder?.apply {
             stop()
             release()
-            Toast.makeText(applicationContext,fileName,Toast.LENGTH_LONG).show()
+
         }
         recorder = null
-    }
-
-    internal inner class RecordButton(ctx: Context) : androidx.appcompat.widget.AppCompatButton(ctx) {
-
-        var mStartRecording = true
-
-        var clicker: OnClickListener = OnClickListener {
-            onRecord(mStartRecording)
-            text = when (mStartRecording) {
-                true -> "Stop recording"
-                false -> "Start recording"
-            }
-            mStartRecording = !mStartRecording
-        }
-
-        init {
-            text = "Start recording"
-            setOnClickListener(clicker)
-        }
-    }
-
-    internal inner class PlayButton(ctx: Context) : androidx.appcompat.widget.AppCompatButton(ctx) {
-        var mStartPlaying = true
-        var clicker: OnClickListener = OnClickListener {
-            onPlay(mStartPlaying)
-            text = when (mStartPlaying) {
-                true -> "Stop playing"
-                false -> "Start playing"
-            }
-            mStartPlaying = !mStartPlaying
-        }
-
-        init {
-            text = "Start playing"
-            setOnClickListener(clicker)
-        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -152,25 +116,9 @@ class MainActivity : AppCompatActivity() {
             subscribe("CTRL-MIKE")
             receiveMessages()
         }
-        fileName = "${externalCacheDir?.absolutePath}/audiorecordtest.mp3"
+        fileName = "${externalCacheDir?.absolutePath}/audiorecordtest.3gpp"
 
         ActivityCompat.requestPermissions(this, permissions, REQUEST_RECORD_AUDIO_PERMISSION)
-
-        recordButton = RecordButton(this)
-        playButton = PlayButton(this)
-        val ll = LinearLayout(this).apply {
-            addView(recordButton,
-                LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    0f))
-            addView(playButton,
-                LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                    0f))
-        }
-        setContentView(ll)
 
     }
     override fun onStop() {
@@ -185,7 +133,7 @@ class MainActivity : AppCompatActivity() {
         try {
             mqttAndroidClient = MqttAndroidClient(applicationContext,"tcp://"+ev.text.toString()+":1883",MqttClient.generateClientId())
             var a = mqttAndroidClient.connect()
-            Toast.makeText(applicationContext,"tcp://"+ev.text.toString()+":1883", Toast.LENGTH_SHORT).show()
+            //Toast.makeText(applicationContext,"tcp://"+ev.text.toString()+":1883", Toast.LENGTH_SHORT).show()
                 a.actionCallback = object : IMqttActionListener {
                 override fun onSuccess(asyncActionToken: IMqttToken){
                     Log.i("Connection", "success ")
@@ -244,27 +192,31 @@ class MainActivity : AppCompatActivity() {
         }
     }
     fun receiveMessages() {
+
+
         mqttAndroidClient.setCallback(object : MqttCallback {
-            override fun connectionLost(cause: Throwable) {
-                //connectionStatus = false
-                // Give your callback on failure here
+            override fun connectionLost(cause: Throwable){
             }
             override fun messageArrived(topic: String, message: MqttMessage) {
-
-                //Toast.makeText(applicationContext,"MESSAGE ARRIVED",Toast.LENGTH_SHORT).show()
                 try {
                     val data = String(message.payload, charset("UTF-8"))
-                    // data is the desired received message
-                    // Give your callback on message received here
-                    tv.text = message.toString()
-                    if(tv.text.equals("MIKE ON"))
+
+                    var text = message.toString()
+                    if(text.equals("MIKE ON"))
                     {
-                        //Toast.makeText(applicationContext,"START MIKE",Toast.LENGTH_SHORT).show()
+                        //Play 이미지
+                        micImage.setImageResource(R.drawable.mikeon)
+                        onPlay(false)
+                        onRecord(true)
                     }
-                    else if(tv.text.equals("MIKE OFF"))
+                    else if(text.equals("MIKE OFF"))
                     {
-                        //Toast.makeText(applicationContext,"STOP MIKE",Toast.LENGTH_SHORT).show()
-                    }
+                        //STOP 이미지
+                        micImage.setImageResource(R.drawable.mikeoff)
+                        onRecord(false)
+                        onPlay(true)
+                        publish("SOURCE")
+                   }
                 } catch (e: Exception) {
                     // Give your callback on error here
                 }
@@ -274,18 +226,23 @@ class MainActivity : AppCompatActivity() {
             }
         })
     }
-    fun publish(topic: String, data: String) {
+    fun publish(topic: String) {
         val encodedPayload : ByteArray
+
+        var bufreader = File(fileName).inputStream()
+        var data = bufreader.readBytes()
         try {
-            encodedPayload = data.toByteArray(charset("UTF-8"))
+            encodedPayload = data
             val message = MqttMessage(encodedPayload)
             message.qos = 2
             message.isRetained = false
             mqttAndroidClient.publish(topic, message)
+            //Toast.makeText(applicationContext,data.toString(),Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             // Give Callback on error here
         } catch (e: MqttException) {
             // Give Callback on error here
+            Toast.makeText(applicationContext,"faile to MQTT publish",Toast.LENGTH_SHORT).show()
         }
     }
     fun disconnect() {
