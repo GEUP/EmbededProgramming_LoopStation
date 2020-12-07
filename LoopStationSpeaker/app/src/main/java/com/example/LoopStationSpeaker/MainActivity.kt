@@ -15,6 +15,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 import org.eclipse.paho.android.service.MqttAndroidClient
 import org.eclipse.paho.client.mqttv3.*
 import java.io.File
+import java.io.FileInputStream
 import java.io.IOException
 
 
@@ -59,13 +60,16 @@ class MainActivity : AppCompatActivity() {
                 setOnCompletionListener{
                     speakerImage.setImageResource(R.drawable.speakeroff)
                 }
-                setDataSource(fileName)
+                var fs = FileInputStream(fileName)
+                var fd = fs.fd
+                setDataSource(fd)
                 prepare()
                 start()
                 //Toast.makeText(applicationContext,fileName,Toast.LENGTH_LONG).show()
             } catch (e: IOException) {
+                Toast.makeText(applicationContext,e.message,Toast.LENGTH_LONG).show()
                 Log.e(LOG_TAG, "prepare() failed")
-                Toast.makeText(applicationContext,"prepare() failed",Toast.LENGTH_LONG).show()
+                speakerImage.setImageResource(R.drawable.speakeroff)
             }
         }
     }

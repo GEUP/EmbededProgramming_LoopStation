@@ -116,7 +116,7 @@ class MainActivity : AppCompatActivity() {
             subscribe("CTRL-MIKE")
             receiveMessages()
         }
-        fileName = "${externalCacheDir?.absolutePath}/audiorecordtest.3gpp"
+        fileName = "${externalCacheDir?.absolutePath}/audiorecordtest.3gp"
 
         ActivityCompat.requestPermissions(this, permissions, REQUEST_RECORD_AUDIO_PERMISSION)
 
