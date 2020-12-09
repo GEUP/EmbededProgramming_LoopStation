@@ -90,17 +90,17 @@ button = bytearray(button)
 waitEnd = 0
 print('start')
 readBtn = os.open('/dev/fpga_push_switch',os.O_RDONLY)
-writeLed = os.open('/dev/fpga_led',os.O_WRONLY)
 writeStep = os.open('/dev/fpga_step_motor',os.O_WRONLY)
+writeLed = os.open('/dev/fpga_led',os.O_WRONLY)
 
 ret = os.read(readBtn,9)
 print(ret[0])
 ledInput = bytes([0])
-stepInput = bytes([1 0 255])
+stepInput = bytes([1, 0, 255])
 while True:
     ret = os.read(readBtn,9)
-    
-    #print(ret)
+    print(ret)
+    sleep(1)
     if waitEnd==0:
         if(ret[0]==1):
             recordOn(1,128)
